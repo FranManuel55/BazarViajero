@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-cream: #fcf6f6;
+  --color-blush: #e4cbcc;
+  --color-mauve: #96777c;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-mauve text-white px-6 py-3 rounded-full font-medium 
+           transition-all duration-300 hover:bg-opacity-90 hover:scale-105 
+           shadow-lg hover:shadow-xl;
+  }
+  
+  .btn-secondary {
+    @apply border-2 border-brand-mauve text-brand-mauve px-6 py-3 rounded-full font-medium 
+           transition-all duration-300 hover:bg-brand-mauve hover:text-white;
+  }
+  
+  .card-product {
+    @apply bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl 
+           transition-all duration-300 hover:-translate-y-2;
+  }
+  
+  .section-padding {
+    @apply py-16 md:py-24 px-4 md:px-8;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-blush);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-mauve);
+}
