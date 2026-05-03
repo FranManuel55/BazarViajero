@@ -15,7 +15,11 @@ pnpm-debug.log*
 
 # environment variables
 .env
+.env.local
 .env.production
+
+# drizzle
+drizzle/
 
 # macOS-specific files
 .DS_Store
@@ -28,3 +32,6 @@ pnpm-debug.log*
 out
 build
 .vercel
+
+# TypeScript
+tsconfig.tsbuildinfo

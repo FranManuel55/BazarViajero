@@ -3,81 +3,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Star, MapPin, Phone, MessageCircle, ShoppingBag, X } from 'lucide-react';
-
-const products = [
-  {
-    id: 1,
-    name: 'Set de Té Artesanal',
-    description: 'Hermoso set de té con-tetera de cerámica pintada a mano',
-    price: '$12.000',
-    image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=400&h=400&fit=crop',
-    category: 'Decoración'
-  },
-  {
-    id: 2,
-    name: 'Bowl de Cerámica',
-    description: '手工陶瓷碗 - Bowl de cerámica hecho a mano con diseño minimalista',
-    price: '$8.500',
-    image: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=400&h=400&fit=crop',
-    category: 'Vajilla'
-  },
-  {
-    id: 3,
-    name: 'Vela Aromática Artesanal',
-    description: 'Vela de soja con aceites esenciales, aroma lavanda',
-    price: '$5.500',
-    image: 'https://images.unsplash.com/photo-1602607434864-2e6877e29895?w=400&h=400&fit=crop',
-    category: 'Aromas'
-  },
-  {
-    id: 4,
-    name: 'Maceta de Ratán',
-    description: 'Maceta artesanal tejida en ratán natural',
-    price: '$9.000',
-    image: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400&h=400&fit=crop',
-    category: 'Decoración'
-  },
-  {
-    id: 5,
-    name: 'Set de Cuencos Japoneses',
-    description: 'Cuencos de porcelana estilo japonés para arroz',
-    price: '$11.000',
-    image: 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=400&h=400&fit=crop',
-    category: 'Vajilla'
-  },
-  {
-    id: 6,
-    name: 'Bandeja de Madera',
-    description: 'Bandeja de madera de olivo con acabado natural',
-    price: '$14.500',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
-    category: 'Decoración'
-  },
-  {
-    id: 7,
-    name: 'Jarrón de Cerámica',
-    description: 'Jarrón artisan avec peinture traditionnelle',
-    price: '$16.000',
-    image: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=400&h=400&fit=crop',
-    category: 'Decoración'
-  },
-  {
-    id: 8,
-    name: 'Servilletero de Bambú',
-    description: 'Servilletero de bambú sostenible ecológica',
-    price: '$4.500',
-    image: 'https://images.unsplash.com/photo-1509941943102-10c232535736?w=400&h=400&fit=crop',
-    category: 'Cocina'
-  },
-  {
-    id: 9,
-    name: 'Espejo Redondo',
-    description: 'Espejo decorativo con marco de mimbre natural',
-    price: '$22.000',
-    image: 'https://images.unsplash.com/photo-1618220179428-22790b461013?w=400&h=400&fit=crop',
-    category: 'Decoración'
-  }
-];
+import Link from 'next/link';
+import { ProductCard, type ProductData } from '@/components/ProductCard';
 
 const reviews = [
   {
@@ -105,21 +32,16 @@ const reviews = [
     id: 4,
     name: 'Javier López',
     rating: 4,
-    text: 'Muy buena variedad de productos. El atención por WhatsApp es excelente, responden rápido.',
+    text: 'Muy buena variedad de productos. La atención por WhatsApp es excelente, responden rápido.',
     date: 'hace 2 meses'
   }
 ];
 
-const categories = ['Todos', 'Decoración', 'Vajilla', 'Aromas', 'Cocina'];
-
 export default function Home() {
-  const [activeCategory, setActiveCategory] = useState('Todos');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-
-  const filteredProducts = activeCategory === 'Todos' 
-    ? products 
-    : products.filter(p => p.category === activeCategory);
+  const [featuredProducts, setFeaturedProducts] = useState<ProductData[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -127,6 +49,22 @@ export default function Home() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Fetch featured products from API
+  useEffect(() => {
+    async function fetchFeatured() {
+      try {
+        const res = await fetch('/api/products?featured=true&limit=6');
+        const data = await res.json();
+        setFeaturedProducts(data.products || []);
+      } catch (error) {
+        console.error('Error fetching featured products:', error);
+      } finally {
+        setLoadingProducts(false);
+      }
+    }
+    fetchFeatured();
   }, []);
 
   const containerVariants = {
@@ -137,11 +75,6 @@ export default function Home() {
         staggerChildren: 0.1
       }
     }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
   };
 
   return (
@@ -155,16 +88,17 @@ export default function Home() {
             </div>
             <span className="font-serif text-2xl font-semibold text-brand-mauve hidden sm:block">El Bazar Viajero</span>
           </div>
-          
+
           <div className="hidden md:flex items-center gap-8">
             <a href="#inicio" className="text-gray-700 hover:text-brand-mauve transition-colors">Inicio</a>
             <a href="#nosotros" className="text-gray-700 hover:text-brand-mauve transition-colors">Nosotros</a>
             <a href="#productos" className="text-gray-700 hover:text-brand-mauve transition-colors">Productos</a>
+            <Link href="/catalogo" className="text-gray-700 hover:text-brand-mauve transition-colors font-medium">Catálogo</Link>
             <a href="#reseñas" className="text-gray-700 hover:text-brand-mauve transition-colors">Reseñas</a>
             <a href="#contacto" className="text-gray-700 hover:text-brand-mauve transition-colors">Contacto</a>
           </div>
 
-          <button 
+          <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="md:hidden p-2 text-brand-mauve"
           >
@@ -175,7 +109,7 @@ export default function Home() {
         {/* Mobile Menu */}
         <AnimatePresence>
           {isMenuOpen && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -185,6 +119,7 @@ export default function Home() {
                 <a href="#inicio" className="text-gray-700 py-2" onClick={() => setIsMenuOpen(false)}>Inicio</a>
                 <a href="#nosotros" className="text-gray-700 py-2" onClick={() => setIsMenuOpen(false)}>Nosotros</a>
                 <a href="#productos" className="text-gray-700 py-2" onClick={() => setIsMenuOpen(false)}>Productos</a>
+                <Link href="/catalogo" className="text-brand-mauve font-medium py-2" onClick={() => setIsMenuOpen(false)}>Catálogo Completo</Link>
                 <a href="#reseñas" className="text-gray-700 py-2" onClick={() => setIsMenuOpen(false)}>Reseñas</a>
                 <a href="#contacto" className="text-gray-700 py-2" onClick={() => setIsMenuOpen(false)}>Contacto</a>
               </div>
@@ -196,11 +131,11 @@ export default function Home() {
       {/* Hero Section */}
       <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-cream via-brand-blush/20 to-brand-mauve/10"></div>
-        
+
         {/* Decorative elements */}
         <div className="absolute top-20 left-10 w-64 h-64 bg-brand-blush/30 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-brand-mauve/20 rounded-full blur-3xl"></div>
-        
+
         <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -211,24 +146,24 @@ export default function Home() {
               <ShoppingBag size={18} className="text-brand-mauve" />
               <span className="text-sm text-gray-600">Productos importados únicos</span>
             </div>
-            
+
             <h1 className="font-serif text-5xl md:text-7xl font-bold text-brand-mauve mb-6 leading-tight">
               El Bazar Viajero
             </h1>
-            
+
             <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Descubrí piezas únicas y artesanales de diferentes partes del mundo. 
+              Descubrí piezas únicas y artesanales de diferentes partes del mundo.
               Cada producto cuenta una historia.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="#productos" className="btn-primary inline-flex items-center justify-center gap-2">
+              <Link href="/catalogo" className="btn-primary inline-flex items-center justify-center gap-2">
                 Ver Catálogo
                 <ChevronDown size={20} />
-              </a>
-              <a 
-                href="https://wa.me/542612478784?text=Hola!%20Vi%20sus%20productos%20por%20la%20web%20y%20quiero%20más%20información." 
-                target="_blank" 
+              </Link>
+              <a
+                href="https://wa.me/542612478784?text=Hola!%20Vi%20sus%20productos%20por%20la%20web%20y%20quiero%20más%20información."
+                target="_blank"
                 rel="noopener noreferrer"
                 className="btn-secondary inline-flex items-center justify-center gap-2"
               >
@@ -239,7 +174,7 @@ export default function Home() {
           </motion.div>
 
           {/* Scroll indicator */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
@@ -255,7 +190,7 @@ export default function Home() {
       {/* About Section */}
       <section id="nosotros" className="section-padding bg-white">
         <div className="max-w-6xl mx-auto">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -277,9 +212,9 @@ export default function Home() {
             >
               <div className="relative">
                 <div className="aspect-[4/5] rounded-2xl overflow-hidden">
-                  <img 
-                    src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&h=750&fit=crop" 
-                    alt="Tienda de productos importados" 
+                  <img
+                    src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&h=750&fit=crop"
+                    alt="Tienda de productos importados"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -301,12 +236,12 @@ export default function Home() {
                 Traemos el mundo a tu hogar
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                En <strong>El Bazar Viajero</strong>,seleccionamos cuidadosamente productos artesanales 
-                de diferentes países, buscando всегда piezas únicas que bringan magia y personalidad 
+                En <strong>El Bazar Viajero</strong>, seleccionamos cuidadosamente productos artesanales
+                de diferentes países, buscando siempre piezas únicas que brinden magia y personalidad
                 a tu hogar.
               </p>
               <p className="text-gray-600 leading-relaxed">
-                Our collection includes handmade ceramics, textiles, decorations y artículos de 
+                Nuestra colección incluye cerámicas hechas a mano, textiles, decoraciones y artículos de
                 decoración que no encontrarás en otro lugar.
               </p>
 
@@ -335,10 +270,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Products Section */}
+      {/* Products Section - Now from Database */}
       <section id="productos" className="section-padding bg-brand-cream">
         <div className="max-w-7xl mx-auto">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -346,80 +281,69 @@ export default function Home() {
             className="text-center mb-12"
           >
             <h2 className="font-serif text-4xl md:text-5xl font-bold text-brand-mauve mb-4">
-              Nuestro Catálogo
+              Productos Destacados
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Explorá nuestra colección de productos importados seleccionados especialmente para vos
+              Una selección de nuestros productos más populares
             </p>
           </motion.div>
 
-          {/* Category Filters */}
-          <motion.div 
+          {/* Products Grid */}
+          {loadingProducts ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-md animate-pulse">
+                  <div className="aspect-square bg-gray-200" />
+                  <div className="p-5 space-y-3">
+                    <div className="h-6 bg-gray-200 rounded w-3/4" />
+                    <div className="h-4 bg-gray-200 rounded w-full" />
+                    <div className="flex justify-between items-center pt-2">
+                      <div className="h-7 bg-gray-200 rounded w-24" />
+                      <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              {featuredProducts.map((product, index) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  variant="compact"
+                  index={index}
+                />
+              ))}
+            </motion.div>
+          ) : (
+            <div className="text-center py-12">
+              <ShoppingBag size={48} className="text-brand-blush mx-auto mb-4" />
+              <p className="text-gray-500">Cargando productos...</p>
+            </div>
+          )}
+
+          {/* CTA to full catalog */}
+          <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="flex flex-wrap justify-center gap-3 mb-10"
+            transition={{ delay: 0.3 }}
+            className="text-center mt-12"
           >
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`px-6 py-2 rounded-full transition-all duration-300 ${
-                  activeCategory === cat 
-                    ? 'bg-brand-mauve text-white shadow-lg' 
-                    : 'bg-white text-gray-600 hover:bg-brand-blush/30'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </motion.div>
-
-          {/* Products Grid */}
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
-          >
-            {filteredProducts.map((product) => (
-              <motion.div
-                key={product.id}
-                variants={itemVariants}
-                className="card-product group"
-              >
-                <div className="relative aspect-square overflow-hidden">
-                  <img 
-                    src={product.image} 
-                    alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute top-3 right-3">
-                    <span className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium text-brand-mauve">
-                      {product.category}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-5">
-                  <h3 className="font-serif text-xl font-semibold text-gray-800 mb-2">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {product.description}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-brand-mauve">
-                      {product.price}
-                    </span>
-                    <button className="w-10 h-10 rounded-full bg-brand-mauve text-white flex items-center justify-center hover:scale-110 transition-transform">
-                      <ShoppingBag size={18} />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+            <Link
+              href="/catalogo"
+              className="btn-primary inline-flex items-center gap-2 text-lg px-8 py-4"
+            >
+              <ShoppingBag size={20} />
+              Ver catálogo completo
+            </Link>
           </motion.div>
         </div>
       </section>
@@ -427,7 +351,7 @@ export default function Home() {
       {/* Reviews Section */}
       <section id="reseñas" className="section-padding bg-white">
         <div className="max-w-6xl mx-auto">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -447,7 +371,7 @@ export default function Home() {
             </div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
@@ -457,7 +381,9 @@ export default function Home() {
             {reviews.map((review) => (
               <motion.div
                 key={review.id}
-                variants={itemVariants}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
                 className="bg-brand-cream p-6 rounded-2xl"
               >
                 <div className="flex items-center gap-1 mb-3">
@@ -466,7 +392,7 @@ export default function Home() {
                   ))}
                 </div>
                 <p className="text-gray-700 mb-4 text-sm leading-relaxed">
-                  "{review.text}"
+                  &quot;{review.text}&quot;
                 </p>
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-gray-800">{review.name}</span>
@@ -476,7 +402,7 @@ export default function Home() {
             ))}
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -485,13 +411,12 @@ export default function Home() {
           >
             <p className="text-gray-700 text-lg">
               <MapPin className="inline mr-2 text-brand-mauve" size={20} />
-              Visitanos en nuestro local en Mendoza - Argentina
+              Visitanos en nuestro local en Godoy Cruz 1124, Guaymallén, Mendoza
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Contact Section */}
       {/* Contact Section */}
       <section id="contacto" className="py-24 bg-brand-cream relative">
         <div className="max-w-6xl mx-auto px-4 md:px-8 relative z-10">
@@ -513,18 +438,18 @@ export default function Home() {
               <p className="text-white/90 text-xl mb-10 max-w-2xl mx-auto font-light">
                 Escribinos por WhatsApp y te ayudamos a encontrar el producto perfecto para vos
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a 
-                  href="https://wa.me/542612478784?text=Hola!%20Me%20gustaría%20recibir%20asesoramiento%20personalizado." 
-                  target="_blank" 
+                <a
+                  href="https://wa.me/542612478784?text=Hola!%20Me%20gustaría%20recibir%20asesoramiento%20personalizado."
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-3 bg-brand-cream text-brand-mauve px-8 py-4 rounded-full font-semibold hover:scale-105 hover:shadow-lg transition-all"
                 >
                   <MessageCircle size={24} />
                   Escribinos al WhatsApp
                 </a>
-                <a 
+                <a
                   href="tel:+542612478784"
                   className="inline-flex items-center justify-center gap-3 border border-white/40 text-white px-8 py-4 rounded-full font-semibold hover:bg-white/10 transition-colors"
                 >
@@ -536,7 +461,7 @@ export default function Home() {
               <div className="mt-12 flex flex-col md:flex-row items-center justify-center gap-6 text-white/80 text-sm">
                 <div className="flex items-center gap-2 bg-white/10 rounded-full px-5 py-2 backdrop-blur-sm">
                   <MapPin size={18} />
-                  <span>Mendoza, Argentina</span>
+                  <span>Godoy Cruz 1124, Guaymallén, Mendoza</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/10 rounded-full px-5 py-2 backdrop-blur-sm">
                   <Phone size={18} />
@@ -544,6 +469,64 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Map Section */}
+      <section id="ubicacion" className="section-padding bg-white">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-10"
+          >
+            <h2 className="font-serif text-4xl md:text-5xl font-bold text-brand-mauve mb-4">
+              Cómo llegar
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Visitanos en nuestro local en Mendoza, Argentina
+            </p>
+            <div className="w-24 h-1 bg-brand-blush mx-auto mt-4"></div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="rounded-3xl overflow-hidden shadow-2xl border border-brand-blush/30"
+          >
+            <iframe
+              title="Ubicación El Bazar Viajero"
+              src="https://maps.google.com/maps?q=-32.8891552,-68.8173496&hl=es&z=17&output=embed"
+              width="100%"
+              height="450"
+              style={{ border: 0 }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="text-center mt-8"
+          >
+            <a
+              href="https://www.google.com/maps/place/El+Bazar+viajero/@-32.8891552,-68.8173496,17z/data=!3m1!4b1!4m6!3m5!1s0x967e0f002daf6c81:0x90d721b5047e9c10!8m2!3d-32.8891552!4d-68.8173496!16s%2Fg%2F11vzg5j66b"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary inline-flex items-center gap-2"
+            >
+              <MapPin size={20} />
+              Abrir en Google Maps
+            </a>
           </motion.div>
         </div>
       </section>
@@ -568,7 +551,7 @@ export default function Home() {
               <h4 className="font-semibold mb-4 text-brand-cream">Links Rápidos</h4>
               <ul className="space-y-2 text-brand-cream/80">
                 <li><a href="#inicio" className="hover:text-brand-blush transition-colors">Inicio</a></li>
-                <li><a href="#productos" className="hover:text-brand-blush transition-colors">Catálogo</a></li>
+                <li><Link href="/catalogo" className="hover:text-brand-blush transition-colors">Catálogo</Link></li>
                 <li><a href="#contacto" className="hover:text-brand-blush transition-colors">Contacto</a></li>
               </ul>
             </div>
