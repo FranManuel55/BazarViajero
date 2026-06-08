@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { WhatsAppButton } from './WhatsAppButton';
+import { toDirectImageUrl } from '@/lib/image-utils';
 
 export interface ProductData {
   id: number;
@@ -33,6 +34,7 @@ function ProductBadge({ featured }: { featured: number | null }) {
 
 export function ProductCard({ product, variant = 'compact', index = 0 }: ProductCardProps) {
   const fallbackImage = 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&h=600&fit=crop';
+  const imageUrl = toDirectImageUrl(product.image) || fallbackImage;
 
   if (variant === 'list') {
     return (
@@ -44,7 +46,7 @@ export function ProductCard({ product, variant = 'compact', index = 0 }: Product
       >
         <div className="relative w-40 sm:w-56 flex-shrink-0 overflow-hidden">
           <img
-            src={product.image || fallbackImage}
+            src={imageUrl}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             onError={(e) => {
@@ -90,7 +92,7 @@ export function ProductCard({ product, variant = 'compact', index = 0 }: Product
       >
         <div className="relative aspect-square overflow-hidden">
           <img
-            src={product.image || fallbackImage}
+            src={imageUrl}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             onError={(e) => {
@@ -138,7 +140,7 @@ export function ProductCard({ product, variant = 'compact', index = 0 }: Product
     >
       <div className="relative aspect-square overflow-hidden">
         <img
-          src={product.image || fallbackImage}
+          src={imageUrl}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           onError={(e) => {

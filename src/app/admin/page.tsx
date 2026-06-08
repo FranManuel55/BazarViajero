@@ -9,6 +9,7 @@ import {
   Image as ImageIcon, Save, Loader2, RefreshCw, Star, Filter
 } from 'lucide-react';
 import Link from 'next/link';
+import { toDirectImageUrl } from '@/lib/image-utils';
 
 interface Product {
   id: number;
@@ -480,7 +481,7 @@ export default function AdminPage() {
                           <div className="w-11 h-11 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0">
                             {product.image ? (
                               <img
-                                src={product.image}
+                                src={toDirectImageUrl(product.image) || ''}
                                 alt={product.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
@@ -641,7 +642,7 @@ export default function AdminPage() {
                 {formData.image && (
                   <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-100">
                     <img
-                      src={formData.image}
+                      src={toDirectImageUrl(formData.image) || ''}
                       alt="Preview"
                       className="w-full h-full object-cover"
                       onError={(e) => {
