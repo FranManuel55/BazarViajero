@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LogOut, Plus, Package, Search, Edit2, Trash2, X,
   Check, AlertTriangle, Eye, EyeOff, ChevronLeft, ChevronRight, Home,
-  Image as ImageIcon, Save, Loader2, RefreshCw, Star, Filter
+  Image as ImageIcon, Save, Loader2, RefreshCw, Star, Filter, Tags
 } from 'lucide-react';
 import Link from 'next/link';
 import { toDirectImageUrl } from '@/lib/image-utils';
@@ -30,7 +30,6 @@ interface Stats {
   featured: number;
 }
 
-const CATEGORIES = ['Ropa', 'Comida', 'Electrónica', 'Cocina', 'Librería'];
 const MAX_FEATURED = 6;
 
 export default function AdminPage() {
@@ -46,6 +45,13 @@ export default function AdminPage() {
 
   const [stats, setStats] = useState<Stats>({ total: 0, active: 0, featured: 0 });
 
+  // Dynamic categories
+  const [dynamicCategories, setDynamicCategories] = useState<string[]>([]);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [deletingCategory, setDeletingCategory] = useState<string | null>(null);
+  const [categoryDeleteConfirm, setCategoryDeleteConfirm] = useState<string | null>(null);
+
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
@@ -60,7 +66,7 @@ export default function AdminPage() {
     description: '',
     price: '',
     image: '',
-    category: CATEGORIES[0],
+    category: '',
     featured: false,
     active: true,
   });
@@ -88,6 +94,16 @@ export default function AdminPage() {
       setStats({ total: data.total || 0, active: data.active || 0, featured: data.featured || 0 });
     } catch (error) {
       console.error('Error fetching stats:', error);
+    }
+  }, []);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await fetch('/api/categories');
+      const data = await res.json();
+      setDynamicCategories(data.categories || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
   }, []);
 
@@ -122,7 +138,8 @@ export default function AdminPage() {
   useEffect(() => {
     fetchProducts();
     fetchStats();
-  }, [fetchProducts, fetchStats]);
+    fetchCategories();
+  }, [fetchProducts, fetchStats, fetchCategories]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -186,11 +203,66 @@ export default function AdminPage() {
       description: '',
       price: '',
       image: '',
-      category: CATEGORIES[0],
+      category: dynamicCategories[0] || '',
       featured: false,
       active: true,
     });
     setShowModal(true);
+  };
+
+  const handleAddCategory = async () => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) return;
+
+    setAddingCategory(true);
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed }),
+      });
+
+      if (res.status === 401) { handleAuthFailure(); return; }
+
+      if (res.ok) {
+        showToast(`Categoría "${trimmed}" creada`, 'success');
+        setNewCategoryName('');
+        fetchCategories();
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Error al crear categoría', 'error');
+      }
+    } catch {
+      showToast('Error de conexión', 'error');
+    } finally {
+      setAddingCategory(false);
+    }
+  };
+
+  const handleDeleteCategory = async (name: string) => {
+    setDeletingCategory(name);
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+
+      if (res.status === 401) { handleAuthFailure(); return; }
+
+      if (res.ok) {
+        showToast(`Categoría "${name}" eliminada`, 'success');
+        setCategoryDeleteConfirm(null);
+        fetchCategories();
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Error al eliminar categoría', 'error');
+      }
+    } catch {
+      showToast('Error de conexión', 'error');
+    } finally {
+      setDeletingCategory(null);
+    }
   };
 
   const openEditModal = (product: Product) => {
@@ -287,6 +359,7 @@ export default function AdminPage() {
   const handleRefresh = () => {
     fetchProducts();
     fetchStats();
+    fetchCategories();
     showToast('Datos actualizados', 'success');
   };
 
@@ -398,6 +471,84 @@ export default function AdminPage() {
           </motion.div>
         </div>
 
+        {/* Category Management Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+              <Tags size={20} className="text-purple-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800 text-sm">Categorías</h2>
+              <p className="text-xs text-gray-400">Gestioná las categorías de tus productos</p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-4">
+            {dynamicCategories.map((cat) => (
+              <div
+                key={cat}
+                className="group flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 transition-all hover:border-gray-300"
+              >
+                <span>{cat}</span>
+                {categoryDeleteConfirm === cat ? (
+                  <div className="flex items-center gap-0.5 ml-1">
+                    <button
+                      onClick={() => handleDeleteCategory(cat)}
+                      disabled={deletingCategory === cat}
+                      className="p-0.5 text-red-500 hover:bg-red-50 rounded transition-all"
+                      title="Confirmar eliminación"
+                    >
+                      {deletingCategory === cat ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                    </button>
+                    <button
+                      onClick={() => setCategoryDeleteConfirm(null)}
+                      className="p-0.5 text-gray-400 hover:bg-gray-100 rounded transition-all"
+                      title="Cancelar"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setCategoryDeleteConfirm(cat)}
+                    className="p-0.5 text-gray-300 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 transition-all"
+                    title="Eliminar categoría"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+            ))}
+            {dynamicCategories.length === 0 && (
+              <p className="text-sm text-gray-400 italic">No hay categorías. Creá la primera.</p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCategory(); } }}
+              placeholder="Nueva categoría..."
+              className="flex-1 max-w-xs px-4 py-2 rounded-xl border border-gray-200 focus:border-brand-mauve focus:outline-none text-sm bg-white"
+            />
+            <button
+              onClick={handleAddCategory}
+              disabled={addingCategory || !newCategoryName.trim()}
+              className="flex items-center gap-1.5 bg-brand-mauve text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-mauve/90 transition-all disabled:opacity-50"
+            >
+              {addingCategory ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+              Agregar
+            </button>
+          </div>
+        </motion.div>
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
             <div className="relative flex-1 sm:flex-initial">
@@ -419,7 +570,7 @@ export default function AdminPage() {
                 className="pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 focus:border-brand-mauve focus:outline-none text-sm bg-white appearance-none cursor-pointer min-w-[140px]"
               >
                 <option value="">Todas las categorías</option>
-                {CATEGORIES.map((cat) => (
+                {dynamicCategories.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -704,7 +855,7 @@ export default function AdminPage() {
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                       className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-brand-mauve focus:outline-none text-sm bg-white"
                     >
-                      {CATEGORIES.map((cat) => (
+                      {dynamicCategories.map((cat) => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </select>
